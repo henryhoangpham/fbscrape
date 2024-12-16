@@ -195,15 +195,26 @@ function scrapeSpecificContent() {
           const anchor = div.querySelector('a');
           if (anchor) {
             const baseUrl = anchor.href;
+            // Check if it's a profile.php URL
+            const isProfilePhpUrl = baseUrl.includes('profile.php');
+            
+            // Generate section URLs based on URL type
+            const sections = isProfilePhpUrl ? {
+              overview: `${baseUrl}&sk=about_overview`,
+              work: `${baseUrl}&sk=about_work_and_education`,
+              places: `${baseUrl}&sk=about_places`,
+              contact: `${baseUrl}&sk=about_contact_and_basic_info`
+            } : {
+              overview: `${baseUrl}/about_overview`,
+              work: `${baseUrl}/about_work_and_education`,
+              places: `${baseUrl}/about_places`,
+              contact: `${baseUrl}/about_contact_and_basic_info`
+            };
+
             return {
               name: anchor.innerText.trim(),
               href: baseUrl,
-              sections: {
-                overview: `${baseUrl}/about_overview`,
-                work: `${baseUrl}/about_work_and_education`,
-                places: `${baseUrl}/about_places`,
-                contact: `${baseUrl}/about_contact_and_basic_info`
-              }
+              sections
             };
           }
           return null;
