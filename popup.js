@@ -79,7 +79,13 @@ function scrape(scrapeType) {
 
 function copyToClipboard() {
   const resultDiv = document.getElementById('result');
-  const textToCopy = resultDiv.textContent;
+  // Convert <br> tags back to newlines and preserve existing newlines
+  const textToCopy = resultDiv.innerHTML
+    .replace(/<br\s*\/?>/g, '\n')  // Convert <br> tags to newlines
+    .replace(/&nbsp;/g, ' ')       // Convert &nbsp; to spaces
+    .replace(/(<([^>]+)>)/gi, '')  // Remove any other HTML tags
+    .replace(/\n\s*\n\s*\n/g, '\n\n')  // Remove excessive newlines
+    .trim();  // Remove leading/trailing whitespace
 
   navigator.clipboard.writeText(textToCopy)
     .then(() => {
