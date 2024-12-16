@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const data = await chrome.storage.local.get(['scrapedData', 'isScrapingInProgress']);
   
   if (data.scrapedData && data.scrapedData.length > 0) {
-    resultDiv.innerHTML = data.scrapedData.join('\n\n').replace(/\n/g, '<br>');
+    updateDisplay(data.scrapedData.join('\n\n'));
   }
 
   // Show finish button if scraping was in progress
@@ -45,12 +45,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Add message listener for display updates
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'updateDisplay') {
+    updateDisplay(request.data);
     const resultDiv = document.getElementById('result');
-    resultDiv.innerHTML = request.data.replace(/\n/g, '<br>');
-    // Scroll to the bottom to show the latest content
     resultDiv.scrollTop = resultDiv.scrollHeight;
   } else if (request.action === 'scrapingFinished') {
-    // Hide finish button when scraping is complete
     document.getElementById('finishButton').style.display = 'none';
     chrome.storage.local.set({ isScrapingInProgress: false });
   }
@@ -72,20 +70,23 @@ function scrape(scrapeType) {
     if (response.error) {
       resultDiv.textContent = `Error: ${response.error}`;
     } else {
-      resultDiv.innerHTML = response.result ? response.result.replace(/\n/g, '<br>') : 'No content found';
+      updateDisplay(response.result || 'No content found');
     }
   });
 }
 
 function copyToClipboard() {
   const resultDiv = document.getElementById('result');
-  // Convert <br> tags back to newlines and preserve existing newlines
+  // Convert HTML back to markdown
   const textToCopy = resultDiv.innerHTML
-    .replace(/<br\s*\/?>/g, '\n')  // Convert <br> tags to newlines
-    .replace(/&nbsp;/g, ' ')       // Convert &nbsp; to spaces
-    .replace(/(<([^>]+)>)/gi, '')  // Remove any other HTML tags
-    .replace(/\n\s*\n\s*\n/g, '\n\n')  // Remove excessive newlines
-    .trim();  // Remove leading/trailing whitespace
+    .replace(/<h3>(.*?)<\/h3>/g, '### $1')
+    .replace(/<strong>(.*?)<\/strong>/g, '**$1**')
+    .replace(/<br\s*\/?>/g, '\n')
+    .replace(/<hr\s*\/?>/g, '___')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/(<([^>]+)>)/gi, '')
+    .replace(/\n\s*\n\s*\n/g, '\n\n')
+    .trim();
 
   navigator.clipboard.writeText(textToCopy)
     .then(() => {
@@ -94,4 +95,14 @@ function copyToClipboard() {
     .catch(err => {
       console.error('Failed to copy: ', err);
     });
+}
+
+function updateDisplay(text) {
+  const resultDiv = document.getElementById('result');
+  // Convert markdown to HTML
+  resultDiv.innerHTML = text
+    .replace(/### (.*)/g, '<h3>$1</h3>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>')
+    .replace(/___/g, '<hr>');
 }

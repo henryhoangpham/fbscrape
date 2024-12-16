@@ -43,7 +43,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 });
               });
 
-              scrapedData.push(`${currentFriend.name}\n(URL:${currentFriend.href})\n\nScraped Info:\n${aboutContent}\n---\n`);
+              scrapedData.push(`### ${currentFriend.name}
+**Profile URL:** ${currentFriend.href}
+
+${aboutContent}
+___
+`);
 
               await chrome.storage.local.set({
                 currentIndex: currentIndex + 1,
@@ -134,17 +139,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         // Format the combined content
         const combinedContent = `
-*Overview:*\n
+**Overview**
 ${sectionData.overview}
 
-*Work and Education:*\n
+**Work and Education**
 ${sectionData.work}
 
-*Places Lived:*\n
+**Places Lived**
 ${sectionData.places}
 
-*Contact and Basic Info:*\n
-${sectionData.contact}`;
+**Contact and Basic Info**
+${sectionData.contact}
+`;
 
         sendResponse({ content: combinedContent });
       } catch (error) {
