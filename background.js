@@ -107,21 +107,33 @@ ___
         // Function to scrape a specific section
         const scrapeSection = async (url, sectionName) => {
           await chrome.tabs.update(tab.id, { url: url });
-          await new Promise(resolve => setTimeout(resolve, 3000));
+          await new Promise(resolve => setTimeout(resolve, 2000));
           
           const [content] = await chrome.scripting.executeScript({
             target: { tabId: tab.id },
             func: () => {
-              const xpath = '/html/body/div[1]/div/div[1]/div/div[3]/div/div/div[1]/div[1]/div/div/div[4]/div/div/div/div[1]/div/div/div/div/div[2]/div';
-              const result = document.evaluate(
-                xpath,
-                document,
-                null,
-                XPathResult.FIRST_ORDERED_NODE_TYPE,
-                null
-              );
-              const element = result.singleNodeValue;
-              return element ? element.innerText : '(Not found)';
+              const xpaths = [
+                '/html/body/div[1]/div/div/div[1]/div/div[3]/div/div/div[1]/div[1]/div/div/div[4]/div/div/div/div[1]/div/div/div/div/div[2]/div',
+                '/html/body/div[1]/div/div[1]/div/div[3]/div/div/div[1]/div[1]/div/div/div[4]/div/div/div/div[1]/div/div/div/div/div[2]/div'
+            ];
+
+              for (const xpath of xpaths) {
+                const result = document.evaluate(
+                  xpath,
+                  document,
+                  null,
+                  XPathResult.FIRST_ORDERED_NODE_TYPE,
+                  null
+                );
+                
+                const element = result.singleNodeValue;
+                if (element && element.innerText.trim()) {
+                  console.log(`Found content using XPath: ${xpath}`);
+                  return element.innerText;
+                }
+              }
+              
+              return '(Not found)';
             }
           });
           
